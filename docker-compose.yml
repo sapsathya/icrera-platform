@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+
+mailhog:
+  image: mailhog/mailhog
+  ports:
+    - "1025:1025"
+    - "8025:8025"
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: icrera_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  server:
+    build: ./server
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/icrera_db
+      - JWT_SECRET=dev-secret
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_SIGNED_URL_EXPIRES=300
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+
+  client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
